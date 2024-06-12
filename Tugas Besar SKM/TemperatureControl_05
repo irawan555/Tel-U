@@ -1,0 +1,68 @@
+#define BLYNK_TEMPLATE_ID "TMPL6_JZBZRs8"
+#define BLYNK_TEMPLATE_NAME "Temperature Control"
+#define BLYNK_AUTH_TOKEN "cbi1vmqh1nnjDEvDvOwemutMz-Cl0atP" // Ganti dengan token otentikasi Blynk Anda
+#include <ESP8266WiFi.h> // library esp 2866 /wemos
+#include <BlynkSimpleEsp8266.h>//lbiirary blynk
+#include <DHT.h> //librray buat sensor dht
+#include <Relay.h>// library relay
+
+#define DHTPIN D6 //mendeklarasikan pin yang bakal dipakai
+#define DHTTYPE DHT11 //nentuin type dht
+#define relay D0 // Ganti dengan pin aktual yang terhubung ke relay
+
+
+char auth[] = "cbi1vmqh1nnjDEvDvOwemutMz-Cl0atP";// autentikasi wifi
+char ssid[] = "IoT";//wifi
+char password[] = "IoT12345";//wifi
+
+
+DHT dht(DHTPIN, DHTTYPE); //get dht
+
+void setup() {
+  Serial.begin(115200);//baud rate buat nentuin baud rate untuk koneksi ke wemos
+  pinMode(relay, OUTPUT);//nentuin mode pin sbg output
+  dht.begin();// jalanin dht
+  Blynk.begin(auth, ssid, password);//konek ke wifi
+
+  while (WiFi.status() != WL_CONNECTED) {//perulangan cek status wifi
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi tersambung!");
+  Serial.println("Blynk tersambung!");
+}
+
+void loop() {
+    // SENSOR DHT
+    float suhu = dht.readTemperature();     // Baca suhu dalam Celcius
+    float kelembaban = dht.readHumidity();  // Baca kelembaban relatif
+    if (isnan(kelembaban) || isnan(suhu)) {//logic membaca dari sensor kelembapan dan suhu
+      Serial.println(F("Gagal membaca dari sensor DHT!"));
+      return;
+    }
+
+    Serial.print("Suhu: ");
+    Serial.print(suhu);
+    Serial.println(" C");
+
+    Serial.print("Kelembaban: ");
+    Serial.print(kelembaban);
+    Serial.println("%");
+    Blynk.virtualWrite(V0, suhu);        // Menampilkan hasil suhu pada Blynk MENGGunakan pin V0
+    Blynk.virtualWrite(V1, kelembaban); // menampilkan hasil kemlembapan di blynk menggunakan pin V1
+
+  // Logika kontrol berdasarkan suhu (ganti dengan logika yang diinginkan)
+  if (suhu > 30) {
+    Serial.println("Panas");
+    Serial.println("Kipas On");
+    digitalWrite(relay, LOW);//kenapa low ? karena kondisi di awal alat pas hidup relaynya udah high
+  } else {
+    digitalWrite(relay, HIGH); // Matikan relay (asumsi relay aktif pada HIGH)
+    Serial.println("Kipas off");
+  }
+
+  delay(2000); // delay 2 detik untuk pembacaan sensor
+  Blynk.run(); // blynk berjalan
+}
