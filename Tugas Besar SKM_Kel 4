@@ -1,0 +1,66 @@
+// #include <Adafruit_Sensor.h>
+#include <DHT.h>
+#include <LiquidCrystal_I2C.h>
+
+//Define the DHT sensor type and the pin it's connected to
+#define DHTPIN 4
+#define relay 3
+#define DHTTYPE DHT11
+
+float suhu;
+int kelembaban;
+int statusrelay = 0;
+
+DHT dht(DHTPIN, DHTTYPE);  // Initialize DHT sensor
+// Initialize the LCD display with the I2C address 0x27 and 16 columns and 2 rows
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+void setup() {
+Serial.begin(9600);  // Start the serial communication
+lcd.init();          // Initialize the LCD
+lcd.backlight();     // Turn on the LCD backlight
+
+pinMode(relay, OUTPUT);     // Set power pin as output
+digitalWrite(relay, HIGH);  // relay mati dulu
+
+dht.begin();  // Start the DHT sensor
+lcd.setCursor(0, 0);
+lcd.print("STARTING UP");
+lcd.setCursor(0, 1);
+lcd.print("SYSTEM...");
+delay(3000);
+lcd.clear();
+}
+
+void loop() {
+suhu = dht.readTemperature();  // Read the temperature from DHT sensor
+kelembaban = dht.readHumidity();
+
+lcd.setCursor(0, 0);
+lcd.print("T: ");
+lcd.print(suhu);
+lcd.print("C");
+
+lcd.setCursor(0, 1);
+lcd.print("H: ");
+lcd.print(kelembaban);
+lcd.print("%");
+
+//Serial Plotter
+Serial.print(suhu);
+Serial.print(",");
+Serial.print(kelembaban);
+Serial.print(",");
+Serial.println(statusrelay);
+
+if (suhu > 30) {
+  digitalWrite(relay, LOW); // Turn on the fan
+  statusrelay = 20;
+} else {
+  digitalWrite(relay, HIGH); // Turn off the fan
+  statusrelay = 0;
+}
+
+delay(10000);  // Wait for 1 second before the next reading
+lcd.clear();
+}
